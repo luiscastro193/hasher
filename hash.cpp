@@ -38,7 +38,13 @@ CAPI HashState* create() {
 	return new HashState();
 }
 
-CAPI size_t update(HashState* state, uint8_t* buffer, size_t n) {
+CAPI uint8_t* allocate(HashState* state, const size_t n) {
+	uint8_t* buffer = (uint8_t*)malloc(n + state->remaining_n);
+	return buffer + state->remaining_n;
+}
+
+CAPI void update(HashState* state, uint8_t* buffer, const size_t n) {
+	buffer -= state->remaining_n;
 	memcpy(buffer, state->remaining, state->remaining_n);
 	size_t offset, available = n + state->remaining_n;
 	
@@ -48,7 +54,6 @@ CAPI size_t update(HashState* state, uint8_t* buffer, size_t n) {
 	state->remaining_n = available - offset;
 	memcpy(state->remaining, buffer + offset, state->remaining_n);
 	free(buffer);
-	return state->remaining_n;
 }
 
 CAPI uint64_t digest(HashState* state) {
