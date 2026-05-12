@@ -1,0 +1,5 @@
+let req=(u=>fetch(u,u.origin==location.origin?{mode:"no-cors",credentials:"include"}:void 0))(new URL("hash.wasm",import.meta.url));
+async function Module(moduleArg={}){var moduleRtn;var b=moduleArg,c,f=!1;function g(){var a=h.buffer;new Int8Array(a);new Int16Array(a);b.HEAPU8=k=new Uint8Array(a);new Uint16Array(a);new Int32Array(a);new Uint32Array(a);new Float32Array(a);new Float64Array(a);new BigInt64Array(a);new BigUint64Array(a)}var k,l={},m,h;
+WebAssembly.instantiateStreaming(req,{a:{e:()=>{throw"";},d:()=>{},a:(a,d)=>{l[a]&&(clearTimeout(l[a].id),delete l[a]);if(!d)return 0;var e=setTimeout(()=>{delete l[a];m(a,performance.now())},d);l[a]={id:e,m:d};return 0},b:a=>{var d=k.length;a>>>=0;if(2147483648<a)return!1;for(var e=1;4>=e;e*=2){a:{var p=(Math.min(2147483648,65536*Math.ceil(Math.max(a,d+65536/e)/65536))-h.buffer.byteLength+65535)/65536|0;try{h.grow(p);g();var n=1;break a}catch(q){}n=
+void 0}if(n)return!0}return!1},c:a=>{throw`exit(${a})`;}}}).then(a=>{a=a.instance.exports;b._create=a.h;b._update=a.i;b._digest=a.j;m=a.k;b._malloc=a.l;h=a.f;g();f=!0;a.g();c?.(b)});f?moduleRtn=b:moduleRtn=new Promise(a=>{c=a});
+;return moduleRtn}export default Module;
