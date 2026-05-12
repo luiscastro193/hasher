@@ -5,8 +5,11 @@ const input = document.querySelector("input");
 const result = document.querySelector("p");
 
 input.onchange = async () => {
-	result.textContent = '';
+	input.disabled = true;
+	result.textContent = 'Loading...';
 	result.textContent = await hash(input.files[0].stream());
+	input.disabled = false;
+	input.focus();
 }
 
 if (input.value) input.onchange();
