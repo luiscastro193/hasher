@@ -1,2 +1,2 @@
 # hasher
-Extremely fast hasher for browsers. SIMD version of FNV-1a.
+Extremely fast hasher for browser streams. SIMD version of FNV-1a.
