@@ -22,7 +22,7 @@ struct HashState {
 	
 	HashState() {
 		for (int i = 0; i < LANES; i++)
-			accumulator[i] = wasm_i64x2_make(SEED ^ PRIME * (2 * i + 1), SEED ^ PRIME * (2 * i + 2));
+			accumulator[i] = wasm_i64x2_make(SEED ^ PRIME * 2 * i, SEED ^ PRIME * (2 * i + 1));
 	}
 	
 	void absorb(const uint8_t* queue) {
@@ -59,15 +59,12 @@ CAPI void update(HashState* state, uint8_t* buffer, const size_t n) {
 CAPI uint64_t digest(HashState* state) {
 	memset(state->remaining + state->remaining_n, 0, BLOCK_SIZE - state->remaining_n);
 	state->absorb(state->remaining);
-	uint64_t lanes[2 * LANES];
-	uint64_t hash = SEED ^ state->remaining_n;
+	v128_t joined = state->accumulator[0];
 	
-	for (int i = 0; i < LANES; i++)
-		wasm_v128_store(lanes + 2 * i, state->accumulator[i]);
+	for (int i = 1; i < LANES; i++)
+		joined = wasm_v128_xor(joined, state->accumulator[i]);
 	
-	for (int i = 0; i < 2 * LANES; i++)
-		hash = (hash ^ lanes[i]) * PRIME;
-	
+	const uint64_t hash = state->remaining_n ^ wasm_u64x2_extract_lane(joined, 0) ^ wasm_u64x2_extract_lane(joined, 1);
 	delete state;
 	return hash;
 }
