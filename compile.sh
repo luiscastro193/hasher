@@ -1,7 +1,7 @@
 #!/bin/bash
 em++ hash.cpp \
-	-Os -flto -fno-exceptions -fno-rtti -DNDEBUG \
-	-mtail-call -msimd128 \
+	-O3 -flto -fno-exceptions -fno-rtti -DNDEBUG \
+	-mtail-call -msimd128 -msse4.2 \
 	-sENVIRONMENT=web -sEXPORT_ES6=1 --no-entry \
 	-sSTRICT=1 --closure 1 -sEXPORT_KEEPALIVE=1 \
 	-sMINIMAL_RUNTIME=1 -sSINGLE_FILE=1 \

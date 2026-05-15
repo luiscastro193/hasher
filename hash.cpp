@@ -1,5 +1,6 @@
 #include <emscripten/emscripten.h>
 #define CAPI extern "C" EMSCRIPTEN_KEEPALIVE
+#define WASM_SIMD_COMPAT_SLOW
 
 #include <cstdint>
 #include <cstring>
