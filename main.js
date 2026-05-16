@@ -8,7 +8,9 @@ input.onchange = async () => {
 	input.disabled = true;
 	result.textContent = "Loading...";
 	
-	result.textContent = await hash(input.files[0].stream()).catch(e => {
+	result.textContent = await hash(input.files[0].stream()).then(h => 
+		BigInt.asUintN(64, h)
+	).catch(e => {
 		console.error(e);
 		return "Error";
 	});
