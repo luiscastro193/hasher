@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cstdlib>
+#include <memory>
 #include <wasm_simd128.h>
 
 constexpr uint64_t PRIME = 0x9E3779B97F4A7C15ULL;
@@ -13,8 +14,6 @@ constexpr uint64_t SEED = 0xCBF29CE484222325ULL;
 constexpr int LANES = 8;
 constexpr size_t WIDTH = sizeof(v128_t);
 constexpr size_t BLOCK_SIZE = LANES * WIDTH;
-
-const v128_t PRIME_VEC = wasm_i64x2_const_splat(PRIME);
 
 struct HashState {
 	v128_t accumulator[LANES];
@@ -30,7 +29,7 @@ struct HashState {
 		for (int i = 0; i < LANES; i++)
 			accumulator[i] = wasm_i64x2_mul(
 				wasm_v128_xor(accumulator[i], wasm_v128_load(queue + i * WIDTH)),
-				PRIME_VEC
+				wasm_i64x2_const_splat(PRIME)
 			);
 	}
 };
@@ -58,6 +57,7 @@ CAPI void update(HashState* state, uint8_t* buffer, const size_t n) {
 }
 
 CAPI uint64_t digest(HashState* state) {
+	std::unique_ptr<HashState> guard(state);
 	memset(state->remaining + state->remaining_n, 0, BLOCK_SIZE - state->remaining_n);
 	state->absorb(state->remaining);
 	v128_t joined = state->accumulator[0];
@@ -65,7 +65,5 @@ CAPI uint64_t digest(HashState* state) {
 	for (int i = 1; i < LANES; i++)
 		joined = wasm_v128_xor(joined, state->accumulator[i]);
 	
-	const uint64_t hash = state->remaining_n ^ wasm_u64x2_extract_lane(joined, 0) ^ wasm_u64x2_extract_lane(joined, 1);
-	delete state;
-	return hash;
+	return state->remaining_n ^ wasm_u64x2_extract_lane(joined, 0) ^ wasm_u64x2_extract_lane(joined, 1);
 }
