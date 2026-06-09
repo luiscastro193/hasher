@@ -62,7 +62,7 @@ CAPI uint64_t digest(HashState* state) {
 	v128_t joined = state->accumulator[0];
 	
 	for (int i = 1; i < LANES; i++)
-		joined = joined ^ state->accumulator[i];
+		joined ^= state->accumulator[i];
 	
 	return state->remaining_n ^ joined[0] ^ joined[1];
 }
