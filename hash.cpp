@@ -6,10 +6,12 @@
 #include <cstring>
 #include <cstdlib>
 #include <memory>
-#include <wasm_simd128.h>
 
 constexpr uint64_t PRIME = 0x9E3779B97F4A7C15ULL;
 constexpr uint64_t SEED = 0xCBF29CE484222325ULL;
+
+typedef uint64_t v128_t __attribute__((vector_size(16)));
+typedef uint64_t v128_unaligned __attribute__((vector_size(16), aligned(1), may_alias));
 
 constexpr int LANES = 8;
 constexpr size_t WIDTH = sizeof(v128_t);
@@ -22,15 +24,12 @@ struct HashState {
 	
 	HashState() {
 		for (int i = 0; i < LANES; i++)
-			accumulator[i] = wasm_i64x2_make(SEED ^ PRIME * 2 * i, SEED ^ PRIME * (2 * i + 1));
+			accumulator[i] = v128_t{SEED ^ PRIME * 2 * i, SEED ^ PRIME * (2 * i + 1)};
 	}
 	
 	void absorb(const uint8_t* queue) {
 		for (int i = 0; i < LANES; i++)
-			accumulator[i] = wasm_i64x2_mul(
-				wasm_v128_xor(accumulator[i], wasm_v128_load(queue + i * WIDTH)),
-				wasm_i64x2_const_splat(PRIME)
-			);
+			accumulator[i] = (accumulator[i] ^ *(const v128_unaligned*)(queue + i * WIDTH)) * v128_t{PRIME, PRIME};
 	}
 };
 
@@ -63,7 +62,7 @@ CAPI uint64_t digest(HashState* state) {
 	v128_t joined = state->accumulator[0];
 	
 	for (int i = 1; i < LANES; i++)
-		joined = wasm_v128_xor(joined, state->accumulator[i]);
+		joined = joined ^ state->accumulator[i];
 	
-	return state->remaining_n ^ wasm_u64x2_extract_lane(joined, 0) ^ wasm_u64x2_extract_lane(joined, 1);
+	return state->remaining_n ^ joined[0] ^ joined[1];
 }
