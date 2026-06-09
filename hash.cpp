@@ -11,7 +11,7 @@ constexpr uint64_t PRIME = 0x9E3779B97F4A7C15ULL;
 constexpr uint64_t SEED = 0xCBF29CE484222325ULL;
 
 typedef uint64_t v128_t __attribute__((vector_size(16)));
-typedef uint64_t v128_unaligned __attribute__((vector_size(16), aligned(1), may_alias));
+typedef uint64_t v128_u __attribute__((vector_size(16), aligned(1), may_alias));
 
 constexpr int LANES = 8;
 constexpr size_t WIDTH = sizeof(v128_t);
@@ -29,7 +29,7 @@ struct HashState {
 	
 	void absorb(const uint8_t* queue) {
 		for (int i = 0; i < LANES; i++)
-			accumulator[i] = (accumulator[i] ^ *(const v128_unaligned*)(queue + i * WIDTH)) * v128_t{PRIME, PRIME};
+			accumulator[i] = (accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH)) * v128_t{PRIME, PRIME};
 	}
 };
 
