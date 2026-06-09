@@ -27,7 +27,7 @@ struct HashState {
 			accumulator[i] = v128_t{SEED ^ PRIME * 2 * i, SEED ^ PRIME * (2 * i + 1)};
 	}
 	
-	void absorb(const uint8_t* queue) {
+	void absorb(const uint8_t* __restrict queue) {
 		for (int i = 0; i < LANES; i++)
 			accumulator[i] = (accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH)) * v128_t{PRIME, PRIME};
 	}
