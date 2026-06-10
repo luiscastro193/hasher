@@ -27,7 +27,7 @@ struct HashState {
 			accumulator[i] = v128_t{SEED ^ PRIME * 2 * i, SEED ^ PRIME * (2 * i + 1)};
 	}
 	
-	void absorb(const uint8_t* __restrict queue) {
+	void absorb(const uint8_t* queue) {
 		for (int i = 0; i < LANES; i++)
 			accumulator[i] = (accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH)) * v128_t{PRIME, PRIME};
 	}
@@ -42,7 +42,7 @@ CAPI uint8_t* allocate(HashState* state, const size_t n) {
 	return buffer + state->remaining_n;
 }
 
-CAPI void update(HashState* state, uint8_t* buffer, const size_t n) {
+CAPI void update(HashState* state, uint8_t* __restrict buffer, const size_t n) {
 	buffer -= state->remaining_n;
 	memcpy(buffer, state->remaining, state->remaining_n);
 	size_t offset, available = n + state->remaining_n;
