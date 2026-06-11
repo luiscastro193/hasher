@@ -30,8 +30,11 @@ struct HashState {
 	}
 	
 	void absorb(const uint8_t* queue) {
-		for (int i = 0; i < LANES; i++)
-			accumulator[i] = (accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH)) * v128_t{PRIME, PRIME, PRIME, PRIME};
+		for (int i = 0; i < LANES; i++) {
+			v128_t acc = accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH);
+			acc ^= acc >> 16;
+			accumulator[i] = acc * v128_t{PRIME, PRIME, PRIME, PRIME};
+		}
 	}
 };
 
@@ -66,8 +69,9 @@ CAPI uint64_t digest(HashState* state) {
 	for (int i = 1; i < LANES; i++)
 		joined ^= (v128_64)state->accumulator[i];
 	
-	uint64_t hash = state->remaining_n;
-	hash = (hash ^ joined[0]) * PRIME64;
-	hash = (hash ^ joined[1]) * PRIME64;
-	return hash;
+	uint64_t hash = state->remaining_n ^ joined[0];
+	hash = (hash ^ hash >> 32) * PRIME64;
+	hash ^= joined[1];
+	hash = (hash ^ hash >> 32) * PRIME64;
+	return hash ^ hash >> 32;
 }
