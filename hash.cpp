@@ -7,8 +7,9 @@
 #include <cstdlib>
 #include <memory>
 
-constexpr uint32_t PRIME = 0x9E3779B9U;
 constexpr uint32_t SEED = 0x811C9DC5U;
+constexpr uint32_t PRIME = 0x9E3779B9U;
+constexpr uint64_t PRIME64 = 0x9E3779B97F4A7C15ULL;
 
 typedef uint32_t v128_t __attribute__((vector_size(16)));
 typedef uint32_t v128_u __attribute__((vector_size(16), aligned(1), may_alias));
@@ -65,5 +66,8 @@ CAPI uint64_t digest(HashState* state) {
 	for (int i = 1; i < LANES; i++)
 		joined ^= (v128_64)state->accumulator[i];
 	
-	return state->remaining_n ^ joined[0] ^ joined[1];
+	uint64_t hash = state->remaining_n;
+	hash = (hash ^ joined[0]) * PRIME64;
+	hash = (hash ^ joined[1]) * PRIME64;
+	return hash;
 }
