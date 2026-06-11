@@ -7,13 +7,14 @@
 #include <cstdlib>
 #include <memory>
 
-constexpr uint64_t PRIME = 0x9E3779B97F4A7C15ULL;
-constexpr uint64_t SEED = 0xCBF29CE484222325ULL;
+constexpr uint32_t PRIME = 0x9E3779B9U;
+constexpr uint32_t SEED = 0x811C9DC5U;
 
-typedef uint64_t v128_t __attribute__((vector_size(16)));
-typedef uint64_t v128_u __attribute__((vector_size(16), aligned(1), may_alias));
+typedef uint32_t v128_t __attribute__((vector_size(16)));
+typedef uint32_t v128_u __attribute__((vector_size(16), aligned(1), may_alias));
+typedef uint64_t v128_64 __attribute__((vector_size(16)));
 
-constexpr int LANES = 8;
+constexpr int LANES = 16;
 constexpr size_t WIDTH = sizeof(v128_t);
 constexpr size_t BLOCK_SIZE = LANES * WIDTH;
 
@@ -24,12 +25,12 @@ struct HashState {
 	
 	HashState() {
 		for (int i = 0; i < LANES; i++)
-			accumulator[i] = v128_t{SEED ^ PRIME * 2 * i, SEED ^ PRIME * (2 * i + 1)};
+			accumulator[i] = v128_t{SEED ^ PRIME * 4 * i, SEED ^ PRIME * (4 * i + 1), SEED ^ PRIME * (4 * i + 2), SEED ^ PRIME * (4 * i + 3)};
 	}
 	
 	void absorb(const uint8_t* queue) {
 		for (int i = 0; i < LANES; i++)
-			accumulator[i] = (accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH)) * v128_t{PRIME, PRIME};
+			accumulator[i] = (accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH)) * v128_t{PRIME, PRIME, PRIME, PRIME};
 	}
 };
 
@@ -59,10 +60,10 @@ CAPI uint64_t digest(HashState* state) {
 	std::unique_ptr<HashState> guard(state);
 	memset(state->remaining + state->remaining_n, 0, BLOCK_SIZE - state->remaining_n);
 	state->absorb(state->remaining);
-	v128_t joined = state->accumulator[0];
+	v128_64 joined = (v128_64)state->accumulator[0];
 	
 	for (int i = 1; i < LANES; i++)
-		joined ^= state->accumulator[i];
+		joined ^= (v128_64)state->accumulator[i];
 	
 	return state->remaining_n ^ joined[0] ^ joined[1];
 }
