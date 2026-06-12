@@ -9,7 +9,7 @@ input.onchange = async () => {
 	result.textContent = "Loading...";
 	
 	result.textContent = await hash(input.files[0].stream()).then(h => 
-		BigInt.asUintN(64, h)
+		BigInt.asUintN(64, h).toString(36)
 	).catch(e => {
 		console.error(e);
 		return "Error";

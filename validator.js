@@ -9,7 +9,7 @@ input.oninput = async () => {
 	
 	if (text) {
 		result.textContent = await hash(new Blob([text]).stream()).then(h => 
-			BigInt.asUintN(64, h)
+			BigInt.asUintN(64, h).toString(36)
 		).catch(e => {
 			console.error(e);
 			return "Error";
