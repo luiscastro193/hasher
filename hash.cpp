@@ -29,9 +29,12 @@ struct HashState {
 	}
 	
 	void absorb(const uint8_t* queue) {
+		constexpr v128_t golden_vec = {GOLDEN, GOLDEN, GOLDEN, GOLDEN};
+		
 		for (int i = 0; i < LANES; i++) {
-			v128_t acc = (accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH)) * v128_t{GOLDEN, GOLDEN, GOLDEN, GOLDEN};
-			accumulator[i] = (acc ^ acc >> 16) * v128_t{GOLDEN, GOLDEN, GOLDEN, GOLDEN};
+			const v128_u block = *(const v128_u*)(queue + i * WIDTH);
+			v128_64 acc = (v128_64)((accumulator[i] ^ block) * golden_vec);
+			accumulator[i] = (v128_t)(acc ^ acc >> 16 ^ acc << 32) * golden_vec;
 		}
 	}
 };
