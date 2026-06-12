@@ -14,7 +14,7 @@ typedef uint32_t v128_t __attribute__((vector_size(16)));
 typedef uint32_t v128_u __attribute__((vector_size(16), aligned(1), may_alias));
 typedef uint64_t v128_64 __attribute__((vector_size(16)));
 
-constexpr int LANES = 16;
+constexpr int LANES = 8;
 constexpr size_t WIDTH = sizeof(v128_t);
 constexpr size_t BLOCK_SIZE = LANES * WIDTH;
 
@@ -64,7 +64,6 @@ CAPI uint64_t digest(HashState* state) {
 	state->absorb(state->remaining);
 	uint64_t hash = state->remaining_n * GOLDEN64;
 	
-	#pragma GCC unroll 1
 	for (int i = 0; i < LANES; i++) {
 		const v128_64 acc = (v128_64)state->accumulator[i];
 		hash ^= acc[0];
