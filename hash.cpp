@@ -30,9 +30,8 @@ struct HashState {
 	
 	void absorb(const uint8_t* queue) {
 		for (int i = 0; i < LANES; i++) {
-			v128_t acc = accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH);
-			acc ^= acc >> 16;
-			accumulator[i] = acc * v128_t{GOLDEN, GOLDEN, GOLDEN, GOLDEN};
+			v128_t acc = (accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH)) * v128_t{GOLDEN, GOLDEN, GOLDEN, GOLDEN};
+			accumulator[i] = (acc ^ acc >> 16) * v128_t{GOLDEN, GOLDEN, GOLDEN, GOLDEN};
 		}
 	}
 };
@@ -63,11 +62,11 @@ CAPI uint64_t digest(HashState* state) {
 	std::unique_ptr<HashState> guard(state);
 	memset(state->remaining + state->remaining_n, 0, BLOCK_SIZE - state->remaining_n);
 	state->absorb(state->remaining);
-	uint64_t hash = state->remaining_n;
+	uint64_t hash = state->remaining_n * GOLDEN64;
 	
 	#pragma GCC unroll 1
 	for (int i = 0; i < LANES; i++) {
-		v128_64 acc = (v128_64)state->accumulator[i];
+		const v128_64 acc = (v128_64)state->accumulator[i];
 		hash ^= acc[0];
 		hash = (hash ^ hash >> 32) * GOLDEN64;
 		hash ^= acc[1];
