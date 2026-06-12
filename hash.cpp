@@ -7,9 +7,8 @@
 #include <cstdlib>
 #include <memory>
 
-constexpr uint32_t SEED = 0x811C9DC5U;
-constexpr uint32_t PRIME = 0x9E3779B9U;
-constexpr uint64_t PRIME64 = 0x9E3779B97F4A7C15ULL;
+constexpr uint32_t GOLDEN = 0x9E3779B9U;
+constexpr uint64_t GOLDEN64 = 0x9E3779B97F4A7C15ULL;
 
 typedef uint32_t v128_t __attribute__((vector_size(16)));
 typedef uint32_t v128_u __attribute__((vector_size(16), aligned(1), may_alias));
@@ -26,14 +25,14 @@ struct HashState {
 	
 	HashState() {
 		for (int i = 0; i < LANES; i++)
-			accumulator[i] = v128_t{SEED ^ PRIME * 4 * i, SEED ^ PRIME * (4 * i + 1), SEED ^ PRIME * (4 * i + 2), SEED ^ PRIME * (4 * i + 3)};
+			accumulator[i] = v128_t{GOLDEN * (4 * i + 1), GOLDEN * (4 * i + 2), GOLDEN * (4 * i + 3), GOLDEN * (4 * i + 4)};
 	}
 	
 	void absorb(const uint8_t* queue) {
 		for (int i = 0; i < LANES; i++) {
 			v128_t acc = accumulator[i] ^ *(const v128_u*)(queue + i * WIDTH);
 			acc ^= acc >> 16;
-			accumulator[i] = acc * v128_t{PRIME, PRIME, PRIME, PRIME};
+			accumulator[i] = acc * v128_t{GOLDEN, GOLDEN, GOLDEN, GOLDEN};
 		}
 	}
 };
@@ -64,14 +63,17 @@ CAPI uint64_t digest(HashState* state) {
 	std::unique_ptr<HashState> guard(state);
 	memset(state->remaining + state->remaining_n, 0, BLOCK_SIZE - state->remaining_n);
 	state->absorb(state->remaining);
-	v128_64 joined = (v128_64)state->accumulator[0];
+	uint64_t hash = state->remaining_n;
 	
-	for (int i = 1; i < LANES; i++)
-		joined ^= (v128_64)state->accumulator[i];
+	#pragma GCC unroll 1
+	for (int i = 0; i < LANES; i++) {
+		v128_64 acc = (v128_64)state->accumulator[i];
+		hash ^= acc[0];
+		hash = (hash ^ hash >> 32) * GOLDEN64;
+		hash ^= acc[1];
+		hash = (hash ^ hash >> 32) * GOLDEN64;
+	}
 	
-	uint64_t hash = state->remaining_n ^ joined[0];
-	hash = (hash ^ hash >> 32) * PRIME64;
-	hash ^= joined[1];
-	hash = (hash ^ hash >> 32) * PRIME64;
+	hash = (hash ^ hash >> 32) * GOLDEN64;
 	return hash ^ hash >> 32;
 }
