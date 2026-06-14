@@ -93,9 +93,7 @@ int main(int argc, char** argv) {
 	const uint64_t hash = state.digest(data + offset, n - offset);
 	
 	char buffer[14];
-	auto [ptr, ec] = std::to_chars(buffer, buffer + sizeof(buffer), hash, 36);
+	char* ptr = std::to_chars(buffer, buffer + sizeof(buffer), hash, 36).ptr;
 	*ptr = '\0';
-
 	puts(buffer);
-	return 0;
 }
